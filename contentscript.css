@@ -1,0 +1,238 @@
+li.ui-state-active {
+  background: #3e3e3e;
+  border-color: #3e3e3e;
+}
+
+#ikke-graph-overlay {
+  position: absolute;
+  z-index: 9999;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  background: rgb(70, 70, 70, 0.2);
+}
+
+#ikke-graph {
+  position: absolute;
+  z-index: 10000;
+  left: 50px;
+  top: 100px;
+  background: white;
+  border: 1px solid #a1a1a1;
+  overflow: hidden;
+  box-shadow: 0 24px 38px 3px rgba(0, 0, 0, 0.14),
+    0 9px 46px 8px rgba(0, 0, 0, 0.12), 0 11px 15px -7px rgba(0, 0, 0, 0.2);
+}
+
+#ikke-button {
+  position: absolute;
+  top: 15px;
+  z-index: 1000;
+  outline: none;
+  padding: 7px 12px 5px 12px;
+  opacity: 0.7;
+  font-size: 14px;
+  line-height: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: #f1f1f1;
+  -webkit-transition: background .2s .1s;
+  transition: background .2s .1s;
+  color: black;
+  user-select: none;
+}
+
+#ikke-button:hover {
+  background: #e8e8e8;
+}
+
+.ikke-close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 1000;
+  outline: none;
+  padding: 7px 12px 5px 12px;
+  opacity: 0.7;
+  font-size: 20px;
+  line-height: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: none;
+  border-radius: 20px;
+  width: 40px;
+  height: 40px;
+  background: white;
+  color: black;
+  opacity: 0.7;
+  user-select: none;
+}
+
+.ikke-close-button:hover {
+  background: #e0e0e0;
+}
+
+.ikke-option-name {
+  padding-left: 10px;
+  display: inline-block;
+}
+
+.ikke-option-value {
+  padding-left: 10px;
+  width: 25px;
+  display: inline-block;
+}
+
+#ikke-title-container {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: "Product Sans",Arial,"sans-serif";
+  font-size: 22px;
+  opacity: 0.7;
+}
+
+#ikke-title-email {
+  margin: 0 10px 0 5px;
+  font-family: "Product Sans",Arial,"sans-serif";
+  font-size: 22px;
+  border-width: 2px;
+}
+
+#ikke-msg {
+  position: absolute;
+  font-family: "Product Sans",Arial,"sans-serif";
+  font-size: 22px;
+  opacity: 0.7;
+}
+
+.ikke-link {
+  stroke: #ccc;
+}
+
+.ikke-node text {
+  pointer-events: none;
+  font: 10px sans-serif;
+}
+
+path.ikke-link {
+  fill: none;
+  stroke: #d3d3d3;
+  stroke-width: 0.5px;
+}
+
+.ikke-circle {
+  fill: #ccc;
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.ikke-text {
+  fill: #000;
+  font: 10px sans-serif;
+  pointer-events: none;
+}
+
+.ikke-placeholder {
+  padding: 10px;
+  background: white;
+  height: 100%;
+  min-height: 1500px;
+}
+
+.ikke-placeholder .loading {
+  position: absolute;
+  font: 32px Arial;
+  color: orange;
+  font-weight: bold;
+}
+
+.ikke-placeholder .progressbar {
+  position: absolute;
+  height: 25px;
+  width: 400px;
+}
+
+text {
+  font-family: sans-serif;
+  text-shadow: -2px 0 white, 0 2px white, 2px 0 white, 0 -2px white;
+}
+
+.ikke-details {
+  position: absolute;
+  top: 130px;
+  right: 10px;
+  font-family: sans-serif;
+  font-size: 19px;
+  text-align: right;
+}
+
+.ikke-details div {
+  margin: 4px 0;
+}
+
+.ikke-details .ikke-name {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.ikke-site {
+  display: inline;
+}
+
+.ikke-placeholder fieldset {
+  font-family: Arial;
+  position: absolute;
+  padding: 10px;
+  top: 50px;
+  left: 16px;
+  font-size: 16px;
+}
+
+.ikke-placeholder input {
+  font-family: Arial;
+  margin: 0;
+}
+
+.ikke-placeholder label {
+  font-family: Arial;
+  font-size: 16px;
+  margin: 0px 8px;
+}
+
+.ikke-zoom-buttons {
+  position: absolute;
+  padding: 20px;
+  top: 5px;
+}
+
+.ikke-team-only-container {
+  position: absolute;
+  right: 12px;
+  top: 80px;
+}
+
+.ikke-zoom-buttons button {
+  background-color: white;
+  border-radius: 2px;
+  display: block;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  cursor: pointer;
+  border: 1px solid #c0c0c0;
+  margin-top: -1px;
+  color: #555;
+  outline: 0;
+  opacity: 0.7;
+  transition: background-color 0.3s ease-out;
+}
