@@ -38,15 +38,11 @@ window.ikkeCalendar = function() {
   var userEmail = $("#xUserEmail").text();
   var currentEmails = [];
   var currentSearchTopic = "";
-  var eventsUrl = "";
-  var eventsHeaders = [];
   var emailToNode = {};
   var firstNames = {};
-  var eventsLoaded = false;
-  var currentLinks = [];
-  var currentFiles = [];
 
   var options = {
+    WORD_COUNT: 5,
     ALPHA_WARMUP_COUNT: 1,
     ALPHA_INITIAL: 0.2,
     ALPHA_WARMUP: 0.001,
@@ -78,7 +74,6 @@ window.ikkeCalendar = function() {
     emailToNode = {};
     emailsToLink = {};
     firstNames = {};
-    eventsLoaded = false;
     currentEmails.push(email);
     $("body").append(
       $("<iframe>")
@@ -97,25 +92,20 @@ window.ikkeCalendar = function() {
         .css("height", $(window).height() - 150)
         .append(
           $("<div>")
-            .addClass("ikke-zoom-buttons")
-            .append(
-              $("<button>")
-                .attr("id", "ikke-zoom-in-button")
-                .text("+"),
-              $("<button>")
-                .attr("id", "ikke-zoom-out-button")
-                .text("-")
-            ),
-          $("<div>")
             .attr("id", "ikke-title-container")
             .append(
               $("<span>")
-                .attr("id", "ikke-title"),
+                .attr("id", "ikke-title")
+                .text("Email:"),
               $("<input>")
                 .attr("id", "ikke-title-email")
                 .on("change", emailChanged),
               $("<span>")
-                .attr("id", "ikke-title-name"),
+                .attr("id", "ikke-title")
+                .text("Filter:"),
+              $("<input>")
+                .attr("id", "ikke-title-filter")
+                .on("change", filterChanged),
             ),
           $("<div>")
             .attr("id", "ikke-msg")
@@ -125,11 +115,34 @@ window.ikkeCalendar = function() {
           $("<button>")
             .addClass("ikke-close-button")
             .on("click", closeGraph)
-            .text("x"))
+            .text("x"),
+          $("<div>")
+            .addClass("ikke-zoom-buttons")
+            .append(
+              $("<button>")
+                .attr("id", "ikke-zoom-in-button")
+                .on("click", function () {
+                  zoom.scaleTo(svg, (currentZoomScale *= 1.3));
+                })
+                .text("+"),
+              $("<button>")
+                .attr("id", "ikke-zoom-out-button")
+                .on("click", function () {
+                  zoom.scaleTo(svg, (currentZoomScale *= 0.7));
+                })
+                .text("-"),
+              $("<div>")
+                .addClass("ikke-options")
+              ),
+        ),
     );
     // addGraphOptions();
     setTimeout(animateLoader, 2500);
     setTitle("", currentEmails.last());
+    chrome.runtime.sendMessage({
+      kind: "get-calendar-events",
+      email: email,
+    });
     chrome.runtime.sendMessage(
       {
         kind: "get-mail-action-token",
@@ -144,7 +157,7 @@ window.ikkeCalendar = function() {
   const addGraphOptions = () => {
     Object.keys(options).map(option => {
       var value = options[option];
-      $(".ikke-zoom-buttons")
+      $(".ikke-options")
         .append($("<div>")
           .addClass("ikke-option")
           .append(
@@ -208,26 +221,15 @@ window.ikkeCalendar = function() {
   }
 
   chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    console.log("Handle message", request.kind);
     switch (request.kind) {
-      case "calendar-events-url":
-        if (eventsLoaded) return;
-        eventsLoaded = true;
-        var now = new Date();
-        now.setDate(now.getDate() + 30);
-        var max = now.toISOString();
-        now.setDate(now.getDate() - 60);
-        var min = now.toISOString();
-        eventsUrl = request.url
-          .replace('maxResults=250&', 'maxResults=1000&')
-          .replace('maxAttendees=1&', 'maxAttendees=12&timeMin=' + min + '&' + 'timeMax=' + max + '&'),
-        eventsHeaders = request.headers;
-        $.ajax({
-          url: eventsUrl,
-          headers: eventsHeaders,
-          success: function(response) {
-            convertToGraph(response.items, currentEmails.last());
-          }
-        });
+      case "calendar-events":
+        console.log("Got events for ", request.email);
+        convertToGraph(request.events, currentEmails.last());
+        break;
+      case "calendar-error":
+        console.log("Error:", request.error);
+        $("#ikke-msg").text("An error occurred: " + request.error);
         break;
     }
   });
@@ -236,15 +238,21 @@ window.ikkeCalendar = function() {
     showGraph($("#ikke-title-email").val());
   }
 
+  function filterChanged() {
+    currentSearchTopic = $("#ikke-title-filter").val();
+    showGraph($("#ikke-title-email").val());
+  }
+
   function setTitle(name, email) {
-    $("#ikke-title").text("Ikke graph for ")
     $("#ikke-title-email").val(email);
-    $("#ikke-title-name").text(name);
+    $("#ikke-title-filter").val(currentSearchTopic);
   }
 
   function convertToGraph(events, email) {
     var links = [];
     var files = {};
+
+    if (!events) return [];
 
     function getUniqueAttendee(attendee) {
       var node = emailToNode[attendee.email];
@@ -275,7 +283,7 @@ window.ikkeCalendar = function() {
     if (currentSearchTopic) {
       var regex = new RegExp(currentSearchTopic, "i");
       events = events.filter(event => {
-        return event.summary.match(regex) || event.attendees.join(" ").match(regex);
+        return event.summary && event.summary.match(regex) || event.attendees.join(" ").match(regex);
       })
     }
 
@@ -328,6 +336,13 @@ window.ikkeCalendar = function() {
       $("#ikke-msg").text("Could not load any events. Calendar appears private...");
     }
   }
+
+  var zoom = d3
+    .zoom()
+    .scaleExtent([0.3, 2]);
+
+  var svg = null;
+  var currentZoomScale = 0.9;
 
   function renderGraph(links, files, email) {
     var w = $("#ikke-graph").width();
@@ -432,7 +447,7 @@ window.ikkeCalendar = function() {
           .sort(function(a, b) {
             return node.words[b] - node.words[a];
           });
-        words.splice(5);
+        words.splice(options.WORD_COUNT);
         words.forEach(function(word, index) {
           if (!topicNodes[word]) {
             topicNodes[word] = {
@@ -475,11 +490,7 @@ window.ikkeCalendar = function() {
       .nodes(nodes)
       .on("tick", tick);
 
-    var zoom = d3
-      .zoom()
-      .scaleExtent([0.3, 2])
-      .on("zoom", zoomed);
-    var svg = d3
+    svg = d3
       .select("#ikke-graph")
       .append("svg")
       .attr("width", w)
@@ -490,19 +501,11 @@ window.ikkeCalendar = function() {
     $("#ikke-msg").text("");
 
     var g = svg.append("g");
-    var currentZoomScale = 0.9;
 
-    function zoomed(a, b, c) {
+    zoom.on("zoom", function (a, b, c) {
       currentZoomScale = d3.event.transform.k;
       g.style("stroke-width", 1.5 / d3.event.transform.k + "px");
       g.attr("transform", d3.event.transform);
-    }
-
-    $("#ikke-zoom-in-button").on("click", function () {
-      zoom.scaleTo(svg, (currentZoomScale *= 1.3));
-    });
-    $("#ikke-zoom-out-button").on("click", function () {
-      zoom.scaleTo(svg, (currentZoomScale *= 0.7));
     });
 
     svg

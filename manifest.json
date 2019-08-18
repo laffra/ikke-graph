@@ -2,7 +2,7 @@
   "name": "Ikke",
   "short_name": "Ikke",
   "description": "Ikke - Explore Your World",
-  "version": "1.8",
+  "version": "1.10",
   "permissions": [
     "tabs",
     "activeTab",

@@ -79,6 +79,10 @@ li.ui-state-active {
   background: #e0e0e0;
 }
 
+.ikke-options {
+  margin-top: 24px;
+}
+
 .ikke-option-name {
   padding-left: 10px;
   display: inline-block;
@@ -101,7 +105,7 @@ li.ui-state-active {
   opacity: 0.7;
 }
 
-#ikke-title-email {
+#ikke-title-email, #ikke-title-filter {
   margin: 0 10px 0 5px;
   font-family: "Product Sans",Arial,"sans-serif";
   font-size: 22px;
