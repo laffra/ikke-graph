@@ -112,6 +112,15 @@ li.ui-state-active {
   border-width: 2px;
 }
 
+#ikke-title-filter {
+  width: 200px;
+}
+
+#ikke-title-email {
+  width: 300px;
+  margin-right: 50px;
+}
+
 #ikke-msg {
   position: absolute;
   font-family: "Product Sans",Arial,"sans-serif";
