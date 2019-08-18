@@ -331,7 +331,10 @@ window.ikkeCalendar = function() {
     if (links.length > 0) {
       currentLinks = links;
       currentFiles = files;
-      renderGraph(links, files, email);
+      $("#ikke-msg").text("Rendering...");
+      setTimeout(function () {
+        renderGraph(links, files, email);
+      }, 1);
     } else {
       $("#ikke-msg").text("Could not load any events. Calendar appears private...");
     }
