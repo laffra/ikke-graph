@@ -675,7 +675,7 @@ window.ikkeCalendar = function() {
         window.open(d.url);
       } else if (d.isTopic) {
         currentSearchTopic = d.name;
-        showGraph(userEmail);
+        showGraph($("#ikke-title-email").val());
       } else if (d.email) {
         showGraph(d.email);
       }
