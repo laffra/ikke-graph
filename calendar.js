@@ -12,7 +12,7 @@ window.ikkeCalendar = function() {
     "^utf$|^pdf$|^gif$|^jpg$|^jpeg$|^https$|^http$|^org$|^gov$|^com$|^nl$|^index$|^html$|^doc$|^uid$|^rfc$";
   var EMAIL_WORDS = "^re$|^fwd$|^fw$";
   var OFFICE_WORDS =
-    "^ooo$|^ping$|^team$|^wfh$|^drinks$|^intro$|^desk$|^planning$|^support$|^discuss$|^discussion$|^quick$|^fast$|^catchup$|^catch$|^meet$|^greet$|^chat$|^zoom$|^lunch$|^coffee$|^office$|^dinner$|^standup$|^meeting$|^sync$|^review$|^check$";
+    "^ooo$|^ping$|^team$|^follow[ -]+up$|^wfh$|^drinks$|^intro$|^desk$|^talks*$|^social time$|^drinks*$|^social$|^tech$|^core$|^leads*$|^send$|^offsite$|^planning$|^support$|^discuss$|^discussion$|^quick$|^fast$|^catchup$|^catch$|^meet$|^greet$|^chat$|^zoom$|^lunch$|^coffee$|^office$|^dinner$|^standup$|^meeting$|^sync$|^review$|^check$";
   var DUTCH_STOPWORDS =
     "^op$|^de$|^den$|^voor$|^aan$|^af$|^al$|^als$|^bij$|^dan$|^dat$|^die$|^dit$|^een$|^en$|^er$|^had$|^heb$|^hem$|^het$|^hij$|^hoe$|^hun$|^ik$|^in$|^is$|^je$|^kan$|^me$|^men$|^met$|^mij$|^nog$|^nu$|^of$|^ons$|^ook$|^te$|^tot$|^uit$|^van$|^was$|^wat$|^we$|^wel$|^wij$|^zal$|^ze$|^zei$|^zij$|^zo$|^zou$";
   var DATETIME_WORDS =
@@ -39,6 +39,7 @@ window.ikkeCalendar = function() {
   var currentEmails = [];
   var currentSearchTopic = "";
   var emailToNode = {};
+  var interestingEmails = [];
   var firstNames = {};
 
   var options = {
@@ -51,7 +52,7 @@ window.ikkeCalendar = function() {
     FILE_RADIUS: 30,
     RADIUS_MULTIPLIER: 2.1,
     COLLIDE_ITERATIONS: 2,
-    FORCE_CENTER_X: 0.05,
+    FORCE_CENTER_X: 0.01,
     FORCE_CENTER_Y: 0.10,
   };
 
@@ -59,13 +60,19 @@ window.ikkeCalendar = function() {
     var currentMsg = $("#ikke-msg").text();
     if (currentMsg.startsWith("Loading")) {
       switch (currentMsg) {
-        case "Loading": $("#ikke-msg").text("Loading."); break;
-        case "Loading.": $("#ikke-msg").text("Loading.."); break;
-        case "Loading..": $("#ikke-msg").text("Loading..."); break;
-        case "Loading...": $("#ikke-msg").text("Loading"); break;
+        case "Loading": showMessage("Loading."); break;
+        case "Loading.": showMessage("Loading.."); break;
+        case "Loading..": showMessage("Loading..."); break;
+        case "Loading...": showMessage("Loading"); break;
       }
       setTimeout(animateLoader, 500);
     }
+  }
+
+  function showMessage(msg) {
+    $("#ikke-msg")
+      .text(msg)
+      .css("left", ($(window).width()/2 - 5*msg.length) + "px")
   }
 
   function showGraph(email) {
@@ -224,12 +231,10 @@ window.ikkeCalendar = function() {
     console.log("Handle message", request.kind);
     switch (request.kind) {
       case "calendar-events":
-        console.log("Got events for ", request.email);
         convertToGraph(request.events, currentEmails.last());
         break;
       case "calendar-error":
-        console.log("Error:", request.error);
-        $("#ikke-msg").text("An error occurred: " + request.error);
+        showMessage("An error occurred: " + request.error);
         break;
     }
   });
@@ -279,11 +284,31 @@ window.ikkeCalendar = function() {
       return link;
     }
 
-    events = events.filter(event => event.attendees);
+    function isAttendingPerson(attendee) {
+      if (attendee.resource) {
+        return false;
+      }
+      if (attendee.responseStatus === "declined") {
+        return false;
+      }
+      return true;
+    }
+
+    function isValuableMeeting(event) {
+      if (!event.attendees) return false; // just a meeting with me
+      event.attendees = event.attendees.filter(isAttendingPerson);
+      if (event.attachments) return true; // attachments are always interesting
+      if (event.attendeesOmitted) return false; // too many attendees
+      if (event.organizer && event.organizer.email && event.organizer.email.indexOf("@group.calendar.google.com") !== -1) return false; // invite from a group
+      if (event.attendees.length > 1) return true; // at least two people in this meeting
+      return false;
+    }
+
+    events = events.filter(isValuableMeeting);
     if (currentSearchTopic) {
       var regex = new RegExp(currentSearchTopic, "i");
       events = events.filter(event => {
-        return event.summary && event.summary.match(regex) || event.attendees.join(" ").match(regex);
+        return event.summary && event.summary.match(regex) || JSON.stringify(event.attendees).match(regex);
       })
     }
 
@@ -297,17 +322,6 @@ window.ikkeCalendar = function() {
         }
       }
 
-      function isAttendingPerson(attendee) {
-        if (attendee.resource) {
-          return false;
-        }
-        if (attendee.responseStatus === "declined") {
-          return false;
-        }
-        return true;
-      }
-
-      event.attendees = event.attendees.filter(isAttendingPerson);
       event.creator.responseStatus = "accepted";
       event.attendees.push(event.creator);
       event.attendees.map(addWords);
@@ -324,6 +338,7 @@ window.ikkeCalendar = function() {
         event.attachments.forEach(function(attachment) {
           files[attachment.fileUrl] = attachment;
           attachment.attendees = event.attendees;
+          if (event.organizer) attachment.attendees.push(event.organizer);
         });
       }
     });
@@ -331,12 +346,13 @@ window.ikkeCalendar = function() {
     if (links.length > 0) {
       currentLinks = links;
       currentFiles = files;
-      $("#ikke-msg").text("Rendering...");
+      showMessage("Rendering...");
       setTimeout(function () {
         renderGraph(links, files, email);
       }, 1);
     } else {
-      $("#ikke-msg").text("Could not load any events. Calendar appears private...");
+      const reason = currentSearchTopic ? "Try another search filter." : "Calendar appears private...";
+      showMessage("No matching events found. " + reason);
     }
   }
 
@@ -362,12 +378,18 @@ window.ikkeCalendar = function() {
       if (title.length < 13) return title;
       return title.slice(0, 8) + "..." + title.slice(title.length - 8);
     }
+
     function convertLinksToNodes() {
       links.forEach(function(link) {
         emailToNode[link.source.email].count += 1;
         emailToNode[link.target.email].count += 1;
       });
-      nodes = d3.values(emailToNode);
+      nodes = d3.values(emailToNode).filter(node => {
+        const radius = 10 + 4 * Math.sqrt(node.count);
+        const interesting = node.isFile || node.isTopic || radius > 26;
+        if (interesting) interestingEmails.push(node.email);
+        return interesting;
+      });
     }
 
     function addFiles() {
@@ -388,7 +410,7 @@ window.ikkeCalendar = function() {
           opacity: 0.1
         };
         file.attendees.map(attendee => {
-          if (attendee.email == currentEmails.last()) return;
+          if (!interestingEmails[attendee.email]) return;
           var node = emailToNode[attendee.email];
           topicLinks.push({ source: fileNode, target: node, value: 1 });
         });
@@ -484,7 +506,7 @@ window.ikkeCalendar = function() {
     convertLinksToNodes();
     addDetails();
     addTopics();
-    addFiles();
+    // addFiles();
     annotateNodes();
     colorSpecialNodes();
 
@@ -501,7 +523,7 @@ window.ikkeCalendar = function() {
       .style("cursor", "move")
       .call(zoom);
 
-    $("#ikke-msg").text("");
+    showMessage("");
 
     var g = svg.append("g");
 
