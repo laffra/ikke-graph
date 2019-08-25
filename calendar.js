@@ -12,7 +12,7 @@ window.ikkeCalendar = function() {
     "^utf$|^pdf$|^gif$|^jpg$|^jpeg$|^https$|^http$|^org$|^gov$|^com$|^nl$|^index$|^html$|^doc$|^uid$|^rfc$";
   var EMAIL_WORDS = "^re$|^fwd$|^fw$";
   var OFFICE_WORDS =
-    "^ooo$|^ping$|^team$|^follow[ -]+up$|^wfh$|^drinks$|^intro$|^desk$|^talks*$|^social time$|^drinks*$|^social$|^tech$|^core$|^leads*$|^send$|^offsite$|^planning$|^support$|^discuss$|^discussion$|^quick$|^fast$|^catchup$|^catch$|^meet$|^greet$|^chat$|^zoom$|^lunch$|^coffee$|^office$|^dinner$|^standup$|^meeting$|^sync$|^review$|^check$";
+    "^ooo$|^project$|^ping$|^team$|^follow[ -]+up$|^wfh$|^drinks$|^intro$|^desk$|^talks*$|^social time$|^drinks*$|^social$|^tech$|^core$|^leads*$|^send$|^offsite$|^planning$|^support$|^discuss$|^discussion$|^quick$|^fast$|^catchup$|^catch$|^meet$|^greet$|^chat$|^zoom$|^lunch$|^coffee$|^office$|^dinner$|^standup$|^meeting$|^sync$|^review$|^check$";
   var DUTCH_STOPWORDS =
     "^op$|^de$|^den$|^voor$|^aan$|^af$|^al$|^als$|^bij$|^dan$|^dat$|^die$|^dit$|^een$|^en$|^er$|^had$|^heb$|^hem$|^het$|^hij$|^hoe$|^hun$|^ik$|^in$|^is$|^je$|^kan$|^me$|^men$|^met$|^mij$|^nog$|^nu$|^of$|^ons$|^ook$|^te$|^tot$|^uit$|^van$|^was$|^wat$|^we$|^wel$|^wij$|^zal$|^ze$|^zei$|^zij$|^zo$|^zou$";
   var DATETIME_WORDS =
@@ -47,13 +47,18 @@ window.ikkeCalendar = function() {
     ALPHA_WARMUP_COUNT: 1,
     ALPHA_INITIAL: 0.2,
     ALPHA_WARMUP: 0.001,
+    ALPHA_SHAKE: 0.1,
+    ALPHA_DRAG: 0.01,
+    ALPHA_DRAG_START: 0.01,
+    ALPHA_SHAKE_INITIAL: 0.01,
     LINK_DISTANCE: 3,
     LINK_STRENGTH: 1.3,
     FILE_RADIUS: 30,
     RADIUS_MULTIPLIER: 2.1,
     COLLIDE_ITERATIONS: 2,
-    FORCE_CENTER_X: 0.01,
-    FORCE_CENTER_Y: 0.10,
+    FORCE_CENTER_X: 0.1,
+    FORCE_CENTER_Y: 0.4,
+    MINIMUM_COLLABORATOR_RADIUS: 26,
   };
 
   function animateLoader() {
@@ -102,17 +107,34 @@ window.ikkeCalendar = function() {
             .attr("id", "ikke-title-container")
             .append(
               $("<span>")
-                .attr("id", "ikke-title")
+                .addClass("ikke-title-label")
                 .text("Email:"),
               $("<input>")
                 .attr("id", "ikke-title-email")
                 .on("change", emailChanged),
               $("<span>")
-                .attr("id", "ikke-title")
+                .addClass("ikke-clear-button")
+                .text("x")
+                .on("click", function () {
+                  $("#ikke-title-email").val(userEmail);
+                  showGraph(userEmail);
+                }),
+              $("<span>")
+                .addClass("ikke-title-label")
                 .text("Filter:"),
               $("<input>")
                 .attr("id", "ikke-title-filter")
                 .on("change", filterChanged),
+              $("<span>")
+                .addClass("ikke-clear-button")
+                .text("x")
+                .on("click", function () {
+                  $("#ikke-title-filter").val("");
+                }),
+              $("<button>")
+                .attr("id", "ikke-load-button")
+                .on("click", filterChanged)
+                .text("Go"),
             ),
           $("<div>")
             .attr("id", "ikke-msg")
@@ -123,6 +145,10 @@ window.ikkeCalendar = function() {
             .addClass("ikke-close-button")
             .on("click", closeGraph)
             .text("x"),
+          $("<div>")
+            .attr("id", "ikke-files")
+            .css("height", $(window).height() - 240)
+            .addClass("ikke-files"),
           $("<div>")
             .addClass("ikke-zoom-buttons")
             .append(
@@ -227,11 +253,16 @@ window.ikkeCalendar = function() {
     closeGraph();
   }
 
-  chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     console.log("Handle message", request.kind);
     switch (request.kind) {
       case "calendar-events":
-        convertToGraph(request.events, currentEmails.last());
+        console.log("Handle", request.events.length, "events for", request.email, request);
+        if (request.email === currentEmails.last()) {
+          convertToGraph(request.events, currentEmails.last());
+        } else {
+          setTimeout(function () { showGraph(currentEmails.last()); }, 1000);
+        }
         break;
       case "calendar-error":
         showMessage("An error occurred: " + request.error);
@@ -367,10 +398,6 @@ window.ikkeCalendar = function() {
     var w = $("#ikke-graph").width();
     var h = $("#ikke-graph").height();
 
-    var ALPHA_SHAKE = 0.1;
-    var ALPHA_DRAG = 0.01;
-    var ALPHA_DRAG_START = 0.01;
-
     var nodes = [];
     var topicLinks = [];
 
@@ -386,7 +413,7 @@ window.ikkeCalendar = function() {
       });
       nodes = d3.values(emailToNode).filter(node => {
         const radius = 10 + 4 * Math.sqrt(node.count);
-        const interesting = node.isFile || node.isTopic || radius > 26;
+        const interesting = node.isFile || node.isTopic || radius > options.MINIMUM_COLLABORATOR_RADIUS;
         if (interesting) interestingEmails.push(node.email);
         return interesting;
       });
@@ -395,26 +422,19 @@ window.ikkeCalendar = function() {
     function addFiles() {
       Object.keys(files).forEach(fileUrl => {
         var file = files[fileUrl];
-        var fileNode = {
-          email: file.fileId,
-          url: file.fileUrl,
-          displayName: shorten(file.title),
-          image: file.iconLink,
-          isFile: true,
-          color: "green",
-          fill: "red",
-          fontSize: 24,
-          linkColor: "green",
-          radius: 10,
-          count: 10,
-          opacity: 0.1
-        };
-        file.attendees.map(attendee => {
-          if (!interestingEmails[attendee.email]) return;
-          var node = emailToNode[attendee.email];
-          topicLinks.push({ source: fileNode, target: node, value: 1 });
-        });
-        nodes.push(fileNode);
+        $("#ikke-files").append(
+          $("<div>")
+            .addClass("ikke-file")
+            .attr("attendees", file.attendees)
+            .append(
+              $("<img>")
+                .attr("src", file.iconLink),
+              $("<a>")
+                .attr("href", file.fileUrl)
+                .attr("target", "_blank")
+                .text(file.title)
+            )
+        );
       });
     }
 
@@ -506,7 +526,7 @@ window.ikkeCalendar = function() {
     convertLinksToNodes();
     addDetails();
     addTopics();
-    // addFiles();
+    addFiles();
     annotateNodes();
     colorSpecialNodes();
 
@@ -523,7 +543,8 @@ window.ikkeCalendar = function() {
       .style("cursor", "move")
       .call(zoom);
 
-    showMessage("");
+
+    showMessage(nodes.length > 0 ? "" : "No meetings found that collaborators.");
 
     var g = svg.append("g");
 
@@ -682,13 +703,13 @@ window.ikkeCalendar = function() {
     function dragstarted(d) {
       d.fx = d.x;
       d.fy = d.y;
-      shake(ALPHA_DRAG_START);
+      shake(options.ALPHA_DRAG_START);
     }
 
     function dragged(d) {
       d.fx = d.cx = d3.event.x;
       d.fy = d.cy = d3.event.y;
-      shake(ALPHA_DRAG);
+      shake(options.ALPHA_DRAG);
     }
 
     function dragended(d) {
@@ -707,7 +728,7 @@ window.ikkeCalendar = function() {
     }
 
     function shake(alpha) {
-      force.alpha(alpha || ALPHA_SHAKE).restart();
+      force.alpha(alpha || options.ALPHA_SHAKE).restart();
     }
 
     function layout(alpha) {
@@ -721,7 +742,7 @@ window.ikkeCalendar = function() {
             })
             .iterations(options.COLLIDE_ITERATIONS)
         )
-        .force("x", d3.forceX(w / 2).strength(options.FORCE_CENTER_X))
+        .force("x", d3.forceX(w * 2 / 5).strength(options.FORCE_CENTER_X))
         .force("y", d3.forceY(h / 2).strength(options.FORCE_CENTER_Y));
       d3.range(options.ALPHA_WARMUP_COUNT).forEach(function() {
         force.alpha(alpha);
@@ -766,6 +787,14 @@ window.ikkeCalendar = function() {
       layout(options.ALPHA_INITIAL);
     }
     layoutAll();
+
+    if (nodes.length === 0 && options.MINIMUM_COLLABORATOR_RADIUS > 0) {
+      console.log("Found no collaborators, relaxing radius minimum...");
+      options.MINIMUM_COLLABORATOR_RADIUS = 0;
+      showGraph(email);
+    }
+    console.log("Show graph", email, nodes);
+    shake(options.ALPHA_SHAKE_INITIAL);
   }
 
   function setInitialZoomScale() {

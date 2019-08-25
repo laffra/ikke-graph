@@ -14,6 +14,7 @@ var lastTabId = 0;
 var eventsLoaded = false;
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  console.log("handle message", request.kind, sender, sender.tab.id);
   switch (request.kind) {
     case "mail-action-token":
       mailActionTokens[request.email] = request.token;
@@ -22,8 +23,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       sendResponse({ token: mailActionTokens[request.email] });
       break;
     case "get-calendar-events":
+      lastTabId = sender.tab.id;
       eventsLoaded = false;
-      sendCalendarEvents(request.email);
+      getCalendarEvents(request.email);
       break;
   }
 });
@@ -52,21 +54,23 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
 
 function sendError(msg, retry) {
   console.log("Sending error:", msg);
-  chrome.tabs.sendMessage(0, {
+  chrome.tabs.sendMessage(lastTabId, {
     kind: "calendar-error",
     error: msg,
     retry: retry ? true : false,
   });
 }
 
-function sendCalendarEvents(email) {
+function retrySendCalendarEvents(message, email) {
+  console.log(message);
+  setTimeout(function () { getCalendarEvents(email); }, 1000);
+}
+
+function getCalendarEvents(email) {
+  console.log("getCalendarEvents", email, eventsLoaded);
   if (eventsLoaded) return;
-  function retry(message, delay) {
-    console.log(message);
-    setTimeout(function () { sendCalendarEvents(email); }, delay || 1);
-  }
   if (!eventsUrl) {
-    retry("No events URL, retrying in 1s", 1000);
+    retrySendCalendarEvents("No events URL, retrying in 1s", email);
     return;
   }
   var now = new Date();
@@ -78,28 +82,36 @@ function sendCalendarEvents(email) {
     .replace(/calendars\/.*\/events/, "calendars/" + email + "/events")
     .replace('maxResults=250&', 'maxResults=1000&')
     .replace('maxAttendees=1&', 'maxAttendees=12&timeMin=' + min + '&' + 'timeMax=' + max + '&');
+  console.log("Get calendar events for", email, "url=", url);
   $.ajax({
     url: url,
     headers: eventsHeaders,
     success: function (response) {
-      if (!response.items) return; sendError("Could not load any events", true);
-      if (response.summary.indexOf("@") !== -1 && response.summary !== email) {
-        return retry("Old response: " + email + " " + response.summary + " - retrying");
-      }
-      try {
-        chrome.tabs.sendMessage(lastTabId, {
-          kind: "calendar-events",
-          email: response.summary,
-          events: response.items,
-          headers: eventsHeaders
-        });
-        eventsLoaded = true;
-      } catch (e) {
-        sendError(e.message);
+      if (!response.items) {
+        sendError("Could not load any events", true);
+      } else {
+        if (response.summary.indexOf("@") !== -1 && response.summary !== email) {
+          retrySendCalendarEvents("Bad response. " + response.items.length + " events. Expected: " + email + ". Instead got: " + response.summary, email);
+        } else {
+          try {
+            console.log("Send", response.items.length, "events for", email, "to tab", lastTabId);
+            console.log("url=", url);
+            chrome.tabs.sendMessage(lastTabId, {
+              kind: "calendar-events",
+              email: email,
+              events: response.items,
+              headers: eventsHeaders
+            });
+            eventsLoaded = true;
+          } catch (e) {
+            sendError(e.message);
+          }
+        }
       }
     }
   });
 }
+
 
 function reloadTab(domain) {
   chrome.tabs.query({ url: "https://" + domain + "/*" }, function(tabs) {

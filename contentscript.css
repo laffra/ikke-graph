@@ -50,6 +50,31 @@ li.ui-state-active {
   background: #e8e8e8;
 }
 
+.ikke-files {
+  position: absolute;
+  top: 55px;
+  right: 15px;
+  z-index: 1000;
+  border: 1px solid #d3d3d3;
+  background: #f1f1f1;
+  overflow: scroll;
+}
+
+.ikke-file {
+  margin: 2px;
+  padding: 4px;
+  font-family: Arial;
+  font-size: 16px;
+  border: 0 solid #d3d3d3;
+  background: white;
+  border-bottom-width: 1px;
+  cursor: pointer;
+}
+
+.ikke-file img {
+  margin-right: 8px;
+}
+
 .ikke-close-button {
   position: absolute;
   top: 15px;
@@ -105,11 +130,32 @@ li.ui-state-active {
   opacity: 0.7;
 }
 
-#ikke-title-email, #ikke-title-filter {
+#ikke-title-email, #ikke-title-filter, #ikke-load-button {
   margin: 0 10px 0 5px;
   font-family: "Product Sans",Arial,"sans-serif";
   font-size: 22px;
   border-width: 2px;
+}
+
+#ikke-load-button {
+  border-width: 0px;
+  background: #f1f1f1;
+  -webkit-transition: background .2s .1s;
+  transition: background .2s .1s;
+  color: black;
+  user-select: none;
+  margin-left: 30px;
+}
+
+.ikke-clear-button {
+  position: relative;
+  left: -28px;
+  color: #a1a1a1;
+  cursor: pointer;
+}
+
+#ikke-load-button:hover {
+  background: #e0e0e0;
 }
 
 #ikke-title-filter {
@@ -118,7 +164,10 @@ li.ui-state-active {
 
 #ikke-title-email {
   width: 300px;
-  margin-right: 50px;
+}
+
+.ikke-title-label {
+  margin-left: 30px;
 }
 
 #ikke-msg {
