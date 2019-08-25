@@ -135,6 +135,7 @@ li.ui-state-active {
   font-family: "Product Sans",Arial,"sans-serif";
   font-size: 22px;
   border-width: 2px;
+  background: #f1f1f1;
 }
 
 #ikke-load-button {
@@ -145,6 +146,7 @@ li.ui-state-active {
   color: black;
   user-select: none;
   margin-left: 30px;
+  padding: 0 8px;
 }
 
 .ikke-clear-button {
