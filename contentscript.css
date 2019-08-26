@@ -58,6 +58,7 @@ li.ui-state-active {
   border: 1px solid #d3d3d3;
   background: #f1f1f1;
   overflow: scroll;
+  max-width: 400px;
 }
 
 .ikke-file {
@@ -69,6 +70,8 @@ li.ui-state-active {
   background: white;
   border-bottom-width: 1px;
   cursor: pointer;
+  height: 22px;
+  white-space: nowrap;
 }
 
 .ikke-file img {
@@ -146,7 +149,6 @@ li.ui-state-active {
   color: black;
   user-select: none;
   margin-left: 30px;
-  padding: 0 8px;
 }
 
 .ikke-clear-button {
@@ -176,6 +178,7 @@ li.ui-state-active {
   position: absolute;
   font-family: "Product Sans",Arial,"sans-serif";
   font-size: 22px;
+  color: #a1a1a1;
   opacity: 0.7;
 }
 

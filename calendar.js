@@ -58,26 +58,14 @@ window.ikkeCalendar = function() {
     COLLIDE_ITERATIONS: 2,
     FORCE_CENTER_X: 0.1,
     FORCE_CENTER_Y: 0.4,
-    MINIMUM_COLLABORATOR_RADIUS: 26,
+    MINIMUM_COLLABORATOR_COUNT: 9,
   };
 
-  function animateLoader() {
-    var currentMsg = $("#ikke-msg").text();
-    if (currentMsg.startsWith("Loading")) {
-      switch (currentMsg) {
-        case "Loading": showMessage("Loading."); break;
-        case "Loading.": showMessage("Loading.."); break;
-        case "Loading..": showMessage("Loading..."); break;
-        case "Loading...": showMessage("Loading"); break;
-      }
-      setTimeout(animateLoader, 500);
-    }
-  }
-
   function showMessage(msg) {
+    var x = $(window).width() * 2 / 5 - 4 * msg.length;
     $("#ikke-msg")
       .text(msg)
-      .css("left", ($(window).width()/2 - 5*msg.length) + "px")
+      .css("left", x + "px")
   }
 
   function showGraph(email) {
@@ -130,7 +118,7 @@ window.ikkeCalendar = function() {
                 .text("x")
                 .on("click", function () {
                   $("#ikke-title-filter").val("");
-                  showGraph(userEmail);
+                  filterChanged();
                 }),
               $("<button>")
                 .attr("id", "ikke-load-button")
@@ -140,8 +128,7 @@ window.ikkeCalendar = function() {
           $("<div>")
             .attr("id", "ikke-msg")
             .css("top", ($(window).height()/2 - 75) + "px")
-            .css("left", ($(window).width()/2 - 25) + "px")
-            .text("Loading..."),
+            .css("left", ($(window).width()/2 - 25) + "px"),
           $("<button>")
             .addClass("ikke-close-button")
             .on("click", closeGraph)
@@ -171,8 +158,13 @@ window.ikkeCalendar = function() {
         ),
     );
     // addGraphOptions();
-    setTimeout(animateLoader, 2500);
+    showMessage("Loading");
     setTitle("", currentEmail);
+    setTimeout(() => {
+      if ($("#ikke-msg").text() === "Loading") {
+        showMessage("Could not load calendar events. Please try again.");
+      }
+    }, 5000);
     chrome.runtime.sendMessage({
       kind: "get-calendar-events",
       email: email,
@@ -371,7 +363,7 @@ window.ikkeCalendar = function() {
     });
 
     if (links.length > 0) {
-      showMessage("Rendering...");
+      showMessage("Rendering");
       setTimeout(function () {
         renderGraph(links, files, email);
       }, 1);
@@ -405,48 +397,54 @@ window.ikkeCalendar = function() {
         emailToNode[link.source.email].count += 1;
         emailToNode[link.target.email].count += 1;
       });
-      nodes = d3.values(emailToNode).filter(node => {
-        const radius = 10 + 4 * Math.sqrt(node.count);
-        const interesting = node.isFile || node.isTopic || radius > options.MINIMUM_COLLABORATOR_RADIUS;
+      nodes = d3.values(emailToNode);
+      var people = nodes.filter(node => !node.isFile && !node.is && node.count > options.MINIMUM_COLLABORATOR_COUNT);
+      var minCount = people.length < 10 ? 0 : options.MINIMUM_COLLABORATOR_COUNT;
+      console.log("Found", people.length, "people. minCount:", minCount);
+      nodes = nodes.filter(node => {
+        const interesting = node.isFile || node.isTopic || node.count > minCount;
         if (interesting) interestingEmails.push(node.email);
         return interesting;
       });
     }
 
     function addFiles() {
-      Object.values(files).filter(file => !file.fileUrl.startsWith("https://mail.google.com")).map(file => {
-        $("#ikke-files").append(
-          $("<div>")
-            .addClass("ikke-file")
-            .attr("emails", JSON.stringify(file.emails))
-            .on("mouseover", function () {
-              $(this).css("background", "#EEE");
-              JSON.parse($(this).attr("emails")).filter(email => email !== currentEmail).map(email => {
-                var circle = $("#ikke-node-" + email.split("@")[0]).find("circle");
-                circle
-                  .attr("r", parseFloat(circle.attr("_r")) + 9)
-                  .attr("fill", "orange");
-              });
-            })
-            .on("mouseout", function () {
-              $(this).css("background", "")
-              JSON.parse($(this).attr("emails")).filter(email => email !== currentEmail).map(email => {
-                var circle = $("#ikke-node-" + email.split("@")[0]).find("circle");
-                circle
-                  .attr("r", circle.attr("_r"))
-                  .attr("fill", circle.attr("_fill"));
-              });
-            })
-            .append(
-              $("<img>")
-                .attr("src", file.iconLink),
-              $("<a>")
-                .attr("href", file.fileUrl)
-                .attr("target", "_blank")
-                .text(file.title)
-            )
-        );
-      });
+      Object.values(files)
+        .filter(file => !file.fileUrl.startsWith("https://mail.google.com"))
+        .sort((file1, file2) => file2.emails.length - file1.emails.length)
+        .map(file => {
+          $("#ikke-files").append(
+            $("<div>")
+              .addClass("ikke-file")
+              .attr("emails", JSON.stringify(file.emails))
+              .on("mouseover", function () {
+                $(this).css("background", "#EEE");
+                JSON.parse($(this).attr("emails")).filter(email => email !== currentEmail).map(email => {
+                  var circle = $("#ikke-node-" + email.split("@")[0]).find("circle");
+                  circle
+                    .attr("r", parseFloat(circle.attr("_r")) + 9)
+                    .attr("fill", "orange");
+                });
+              })
+              .on("mouseout", function () {
+                $(this).css("background", "")
+                JSON.parse($(this).attr("emails")).filter(email => email !== currentEmail).map(email => {
+                  var circle = $("#ikke-node-" + email.split("@")[0]).find("circle");
+                  circle
+                    .attr("r", circle.attr("_r"))
+                    .attr("fill", circle.attr("_fill"));
+                });
+              })
+              .append(
+                $("<img>")
+                  .attr("src", file.iconLink),
+                $("<a>")
+                  .attr("href", file.fileUrl)
+                  .attr("target", "_blank")
+                  .text(file.title)
+              )
+          );
+        });
     }
 
     function annotateNodes() {
@@ -805,11 +803,6 @@ window.ikkeCalendar = function() {
     }
     layoutAll();
 
-    if (nodes.length === 0 && options.MINIMUM_COLLABORATOR_RADIUS > 0) {
-      console.log("Found no collaborators, relaxing radius minimum...");
-      options.MINIMUM_COLLABORATOR_RADIUS = 0;
-      showGraph(email);
-    }
     console.log("Show graph", email, nodes);
     shake(options.ALPHA_SHAKE_INITIAL);
   }
