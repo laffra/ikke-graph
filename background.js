@@ -81,8 +81,11 @@ function getCalendarEvents(email) {
   var url = eventsUrl
     .replace(/calendars\/.*\/events/, "calendars/" + email + "/events")
     .replace('maxResults=250&', 'maxResults=1000&')
-    .replace('maxAttendees=1&', 'maxAttendees=12&timeMin=' + min + '&' + 'timeMax=' + max + '&');
-  console.log("Get calendar events for", email, "url=", url);
+    .replace('maxAttendees=1&', 'maxAttendees=12&')
+    .replace(/pageToken=.*/, '')
+    .replace(/timeMax=[^&]*&/, 'timeMax=' + max + '&');
+  console.log("Get calendar events for", email);
+  url.split("&").map(s => console.log("   " + s));
   $.ajax({
     url: url,
     headers: eventsHeaders,

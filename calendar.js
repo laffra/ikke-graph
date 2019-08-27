@@ -1,4 +1,4 @@
-window.ikkeCalendar = function() {
+window.ikkeCalendar = function () {
   /*
     * Ikke - Calendar
     */
@@ -12,7 +12,7 @@ window.ikkeCalendar = function() {
     "^utf$|^pdf$|^gif$|^jpg$|^jpeg$|^https$|^http$|^org$|^gov$|^com$|^nl$|^index$|^html$|^doc$|^uid$|^rfc$";
   var EMAIL_WORDS = "^re$|^fwd$|^fw$";
   var OFFICE_WORDS =
-    "^ooo$|^project$|^ping$|^team$|^follow[ -]+up$|^wfh$|^drinks$|^intro$|^desk$|^talks*$|^social time$|^drinks*$|^social$|^tech$|^core$|^leads*$|^send$|^offsite$|^planning$|^support$|^discuss$|^discussion$|^quick$|^fast$|^catchup$|^catch$|^meet$|^greet$|^chat$|^zoom$|^lunch$|^coffee$|^office$|^dinner$|^standup$|^meeting$|^sync$|^review$|^check$";
+    "^ooo$|^project$|^workshop$|^time$|^ping$|^team$|^follow[ -]+up$|^wfh$|^drinks$|^intro$|^desk$|^talks*$|^social time$|^drinks*$|^social$|^tech$|^core$|^leads*$|^send$|^offsite$|^planning$|^support$|^discuss$|^discussion$|^quick$|^fast$|^catchup$|^catch$|^meet$|^greet$|^chat$|^zoom$|^lunch$|^coffee$|^office$|^dinner$|^standup$|^meeting$|^sync$|^review$|^check$";
   var DUTCH_STOPWORDS =
     "^op$|^de$|^den$|^voor$|^aan$|^af$|^al$|^als$|^bij$|^dan$|^dat$|^die$|^dit$|^een$|^en$|^er$|^had$|^heb$|^hem$|^het$|^hij$|^hoe$|^hun$|^ik$|^in$|^is$|^je$|^kan$|^me$|^men$|^met$|^mij$|^nog$|^nu$|^of$|^ons$|^ook$|^te$|^tot$|^uit$|^van$|^was$|^wat$|^we$|^wel$|^wij$|^zal$|^ze$|^zei$|^zij$|^zo$|^zou$";
   var DATETIME_WORDS =
@@ -59,6 +59,7 @@ window.ikkeCalendar = function() {
     FORCE_CENTER_X: 0.1,
     FORCE_CENTER_Y: 0.4,
     MINIMUM_COLLABORATOR_COUNT: 9,
+    FAILED_EVENTS_TIMEOUT: 7000,
   };
 
   function showMessage(msg) {
@@ -127,8 +128,8 @@ window.ikkeCalendar = function() {
             ),
           $("<div>")
             .attr("id", "ikke-msg")
-            .css("top", ($(window).height()/2 - 75) + "px")
-            .css("left", ($(window).width()/2 - 25) + "px"),
+            .css("top", ($(window).height() / 2 - 75) + "px")
+            .css("left", ($(window).width() / 2 - 25) + "px"),
           $("<button>")
             .addClass("ikke-close-button")
             .on("click", closeGraph)
@@ -154,17 +155,21 @@ window.ikkeCalendar = function() {
                 .text("-"),
               $("<div>")
                 .addClass("ikke-options")
-              ),
+            ),
         ),
     );
     // addGraphOptions();
     showMessage("Loading");
-    setTitle("", currentEmail);
+    setTitle("", email);
+    getCalendarEvents(email);
+  }
+
+  function getCalendarEvents(email) {
     setTimeout(() => {
-      if ($("#ikke-msg").text() === "Loading") {
+      if (email === currentEmail && $("#ikke-msg").text() === "Loading") {
         showMessage("Could not load calendar events. Please try again.");
       }
-    }, 5000);
+    }, options.FAILED_EVENTS_TIMEOUT);
     chrome.runtime.sendMessage({
       kind: "get-calendar-events",
       email: email,
@@ -803,7 +808,6 @@ window.ikkeCalendar = function() {
     }
     layoutAll();
 
-    console.log("Show graph", email, nodes);
     shake(options.ALPHA_SHAKE_INITIAL);
   }
 
