@@ -1,8 +1,8 @@
 {
-  "name": "Ikke",
-  "short_name": "Ikke",
-  "description": "Ikke - Explore Your World",
-  "version": "1.16",
+  "name": "Ikke Work Graph",
+  "short_name": "Ikke Work Graph",
+  "description": "Ikke  Work Graph - See Who You Work With",
+  "version": "1.18",
   "permissions": [
     "tabs",
     "activeTab",

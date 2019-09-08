@@ -99,8 +99,8 @@ window.ikkeCalendar = function () {
         .addClass("ikke-graph-overlay"),
       $("<div>")
         .attr("id", "ikke-graph")
-        .css("width", $(window).width() - 100)
-        .css("height", $(window).height() - 150)
+        .css("width", $(window).width() - 50)
+        .css("height", $(window).height() - 50)
         .append(
           $("<div>")
             .attr("id", "ikke-title-container")
@@ -256,13 +256,13 @@ window.ikkeCalendar = function () {
             currentSearchTopic = "";
             showGraph(userEmail);
           })
-          .text("Ikke Graph")
+          .text("Ikke Work Graph")
       );
     }
     $("#ikke-button").css("left", $(window).width() / 2 - 10 + "px");
     $("#ikke-graph")
-      .css("width", $(window).width() - 100)
-      .css("height", $(window).height() - 150);
+      .css("width", $(window).width() - 50)
+      .css("height", $(window).height() - 50);
     closeGraph();
   }
 
@@ -579,7 +579,19 @@ window.ikkeCalendar = function () {
         $(".ikke-projects")
           .append($("<div>")
             .addClass("ikke-project")
-            .text(project.email)
+            .text("👥 " + project.email)
+            .on("mouseover", function () {
+              $(this).css("background", "#EEE");
+              $(".ikke-node text:contains('" + project.email + "')").animate({ "font-size": "30pt"}, 500);
+            })
+            .on("mouseout", function () {
+              $(this).css("background", "")
+              $(".ikke-node text:contains('" + project.email + "')").animate({ "font-size": "20pt"}, 500);
+            })
+            .on("click", function () {
+              currentSearchTopic = project.email;
+              showGraph($("#ikke-title-email").val());
+            })
           );
       });
     }

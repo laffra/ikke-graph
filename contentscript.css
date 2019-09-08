@@ -16,8 +16,8 @@ li.ui-state-active {
 #ikke-graph {
   position: absolute;
   z-index: 10000;
-  left: 50px;
-  top: 100px;
+  left: 35px;
+  top: 25px;
   background: white;
   border: 1px solid #a1a1a1;
   overflow: hidden;
@@ -128,7 +128,7 @@ li.ui-state-active {
   font-family: Arial;
   font-size: 16px;
   margin-top: 8px;
-  margin-left: 28px;
+  margin-left: 4px;
   height: 22px;
   white-space: nowrap;
 }
