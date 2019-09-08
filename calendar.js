@@ -1,7 +1,7 @@
 window.ikkeCalendar = function () {
   /*
-    * Ikke - Calendar
-    */
+  * Ikke - Calendar
+  */
 
   if (document.location.href.endsWith("#IKKE")) return;
 
@@ -10,19 +10,22 @@ window.ikkeCalendar = function () {
 
   var WEB_WORDS =
     "^utf$|^pdf$|^gif$|^jpg$|^jpeg$|^https$|^http$|^org$|^gov$|^com$|^nl$|^index$|^html$|^doc$|^uid$|^rfc$";
+  var SIZE_WORDS =
+    "^small$|^xl$|^tiny$|^large$|^medium$|^extralarge$";
   var EMAIL_WORDS = "^re$|^fwd$|^fw$";
   var OFFICE_WORDS =
-    "^ooo$|^project$|^workshop$|^time$|^ping$|^team$|^follow[ -]+up$|^wfh$|^drinks$|^intro$|^desk$|^talks*$|^social time$|^drinks*$|^social$|^tech$|^core$|^leads*$|^send$|^offsite$|^planning$|^support$|^discuss$|^discussion$|^quick$|^fast$|^catchup$|^catch$|^meet$|^greet$|^chat$|^zoom$|^lunch$|^coffee$|^office$|^dinner$|^standup$|^meeting$|^sync$|^review$|^check$";
+    "^eng$|^engineering$|^roundtable$|^round$|^table$|^batch$|^scrum$|^program$|^roadmap$|^leadership$|^document$|^bootcamp$|^okr$|^erd$|^erp$|^level$|^sprint$|^hour$|^timelines$|^all hands$|^hands$|^brown bag$|^hold$|^retrospective$|^topics$|^demos$|^demo$|^recap$|^ooo$|^project$|^jam$|^workshop$|^time$|^ping$|^team$|^follow[ -]+up$|^wfh$|^drinks$|^intro$|^desk$|^talks*$|^social time$|^drinks*$|^social$|^tech$|^core$|^leads*$|^send$|^offsite$|^dnb$|^planning$|^support$|^discuss$|^discussion$|^quick$|^fast$|^catchup$|^catch$|^meet$|^greet$|^chat$|^zoom$|^lunch$|^coffee$|^office$|^dinner$|^stand$|^standup$|^meeting$|^sync$|^review$|^check$";
   var DUTCH_STOPWORDS =
     "^op$|^de$|^den$|^voor$|^aan$|^af$|^al$|^als$|^bij$|^dan$|^dat$|^die$|^dit$|^een$|^en$|^er$|^had$|^heb$|^hem$|^het$|^hij$|^hoe$|^hun$|^ik$|^in$|^is$|^je$|^kan$|^me$|^men$|^met$|^mij$|^nog$|^nu$|^of$|^ons$|^ook$|^te$|^tot$|^uit$|^van$|^was$|^wat$|^we$|^wel$|^wij$|^zal$|^ze$|^zei$|^zij$|^zo$|^zou$";
   var DATETIME_WORDS =
-    "^hours$|^week$|^quarterly$|^monthly$|^weekly$|^biweekly$|^daily$|^month$|^year$|^today$|^tomorrow$|^am$|^pm$|^jan$|^feb$|^mar$|^apr$|^may$|^jun jul aug$|^sep$|^oct$|^nov$|^dec$|^january$|^february$|^march$|^april$|^may$|^june$|^july$|^august$|^september$|^october$|^november$|^december$|^mon$|^tue$|^wed$|^thu$|^fri$|^sat$|^sun$|^[a-z]*day$";
+    "^evening$|^afternoon$|^morning$|^current$|^hours$|^week$|^quarterly$|^monthly$|^wkly$|^weekly$|^biweekly$|^daily$|^month$|^year$|^today$|^tomorrow$|^am$|^pm$|^jan$|^feb$|^mar$|^apr$|^may$|^jun jul aug$|^sep$|^oct$|^nov$|^dec$|^january$|^february$|^march$|^april$|^may$|^june$|^july$|^august$|^september$|^october$|^november$|^december$|^mon$|^tue$|^wed$|^thu$|^fri$|^sat$|^sun$|^[a-z]*day$";
   var ENGLISH_STOPWORDS =
     "^a$|^able$|^about$|^above$|^abst$|^accordance$|^according$|^accordingly$|^across$|^act$|^actually$|^added$|^adj$|^affected$|^affecting$|^affects$|^after$|^afterwards$|^again$|^against$|^ah$|^all$|^almost$|^alone$|^along$|^already$|^also$|^although$|^always$|^am$|^among$|^amongst$|^an$|^and$|^announce$|^another$|^any$|^anybody$|^anyhow$|^anymore$|^anyone$|^anything$|^anyway$|^anyways$|^anywhere$|^apparently$|^approximately$|^are$|^aren$|^arent$|^arise$|^around$|^as$|^aside$|^ask$|^asking$|^at$|^auth$|^available$|^away$|^awfully$|^b$|^back$|^be$|^became$|^because$|^become$|^becomes$|^becoming$|^been$|^before$|^beforehand$|^begin$|^beginning$|^beginnings$|^begins$|^behind$|^being$|^believe$|^below$|^beside$|^besides$|^between$|^beyond$|^biol$|^both$|^brief$|^briefly$|^but$|^by$|^c$|^ca$|^came$|^can$|^cannot$|^can't$|^cause$|^causes$|^certain$|^certainly$|^co$|^com$|^come$|^comes$|^contain$|^containing$|^contains$|^could$|^couldnt$|^d$|^date$|^did$|^didn't$|^different$|^do$|^does$|^doesn't$|^doing$|^done$|^don't$|^down$|^downwards$|^due$|^during$|^e$|^each$|^ed$|^edu$|^effect$|^eg$|^eight$|^eighty$|^either$|^else$|^elsewhere$|^end$|^ending$|^enough$|^especially$|^et$|^et-al$|^etc$|^even$|^ever$|^every$|^everybody$|^everyone$|^everything$|^everywhere$|^ex$|^except$|^f$|^far$|^few$|^ff$|^fifth$|^first$|^five$|^fix$|^followed$|^following$|^follows$|^for$|^former$|^formerly$|^forth$|^found$|^four$|^from$|^further$|^furthermore$|^g$|^gave$|^get$|^gets$|^getting$|^give$|^given$|^gives$|^giving$|^go$|^goes$|^gone$|^got$|^gotten$|^h$|^had$|^happens$|^hardly$|^has$|^hasn't$|^have$|^haven't$|^having$|^he$|^hed$|^hence$|^her$|^here$|^hereafter$|^hereby$|^herein$|^heres$|^hereupon$|^hers$|^herself$|^hes$|^hi$|^hid$|^him$|^himself$|^his$|^hither$|^home$|^how$|^howbeit$|^however$|^hundred$|^i$|^id$|^ie$|^if$|^i'll$|^im$|^immediate$|^immediately$|^importance$|^important$|^in$|^inc$|^indeed$|^index$|^information$|^instead$|^into$|^invention$|^inward$|^is$|^isn't$|^it$|^itd$|^it'll$|^its$|^itself$|^i've$|^j$|^just$|^k$|^keep	keeps$|^kept$|^kg$|^km$|^know$|^known$|^knows$|^l$|^largely$|^last$|^lately$|^later$|^latter$|^latterly$|^least$|^less$|^lest$|^let$|^lets$|^like$|^liked$|^likely$|^line$|^little$|^'ll$|^look$|^looking$|^looks$|^ltd$|^m$|^made$|^mainly$|^make$|^makes$|^many$|^may$|^maybe$|^me$|^mean$|^means$|^meantime$|^meanwhile$|^merely$|^mg$|^might$|^million$|^miss$|^ml$|^more$|^moreover$|^most$|^mostly$|^mr$|^mrs$|^much$|^mug$|^must$|^my$|^myself$|^n$|^na$|^name$|^namely$|^nay$|^nd$|^near$|^nearly$|^necessarily$|^necessary$|^need$|^needs$|^neither$|^never$|^nevertheless$|^new$|^next$|^nine$|^ninety$|^no$|^nobody$|^non$|^none$|^nonetheless$|^noone$|^nor$|^normally$|^nos$|^not$|^noted$|^nothing$|^now$|^nowhere$|^o$|^obtain$|^obtained$|^obviously$|^of$|^off$|^often$|^oh$|^ok$|^okay$|^old$|^omitted$|^on$|^once$|^one$|^ones$|^only$|^onto$|^or$|^ord$|^other$|^others$|^otherwise$|^ought$|^our$|^ours$|^ourselves$|^out$|^outside$|^over$|^overall$|^owing$|^own$|^p$|^page$|^pages$|^part$|^particular$|^particularly$|^past$|^per$|^perhaps$|^placed$|^please$|^plus$|^poorly$|^possible$|^possibly$|^potentially$|^pp$|^predominantly$|^present$|^previously$|^primarily$|^probably$|^promptly$|^proud$|^provides$|^put$|^q$|^que$|^quickly$|^quite$|^qv$|^r$|^ran$|^rather$|^rd$|^re$|^readily$|^really$|^recent$|^recently$|^ref$|^refs$|^regarding$|^regardless$|^regards$|^related$|^relatively$|^research$|^respectively$|^resulted$|^resulting$|^results$|^right$|^run$|^s$|^said$|^same$|^saw$|^say$|^saying$|^says$|^sec$|^section$|^see$|^seeing$|^seem$|^seemed$|^seeming$|^seems$|^seen$|^self$|^selves$|^sent$|^seven$|^several$|^shall$|^she$|^shed$|^she'll$|^shes$|^should$|^shouldn't$|^show$|^showed$|^shown$|^showns$|^shows$|^significant$|^significantly$|^similar$|^similarly$|^since$|^six$|^slightly$|^so$|^some$|^somebody$|^somehow$|^someone$|^somethan$|^something$|^sometime$|^sometimes$|^somewhat$|^somewhere$|^soon$|^sorry$|^specifically$|^specified$|^specify$|^specifying$|^still$|^stop$|^strongly$|^sub$|^substantially$|^successfully$|^such$|^sufficiently$|^suggest$|^sup$|^sure	t$|^take$|^taken$|^taking$|^tell$|^tends$|^th$|^than$|^thank$|^thanks$|^thanx$|^that$|^that'll$|^thats$|^that've$|^the$|^their$|^theirs$|^them$|^themselves$|^then$|^thence$|^there$|^thereafter$|^thereby$|^thered$|^therefore$|^therein$|^there'll$|^thereof$|^therere$|^theres$|^thereto$|^thereupon$|^there've$|^these$|^they$|^theyd$|^they'll$|^theyre$|^they've$|^think$|^this$|^those$|^thou$|^though$|^thoughh$|^thousand$|^throug$|^through$|^throughout$|^thru$|^thus$|^til$|^tip$|^to$|^together$|^too$|^took$|^toward$|^towards$|^tried$|^tries$|^truly$|^try$|^trying$|^ts$|^twice$|^two$|^u$|^un$|^under$|^unfortunately$|^unless$|^unlike$|^unlikely$|^until$|^unto$|^up$|^upon$|^ups$|^us$|^use$|^used$|^useful$|^usefully$|^usefulness$|^uses$|^using$|^usually$|^v$|^value$|^various$|^'ve$|^very$|^via$|^viz$|^vol$|^vols$|^vs$|^w$|^want$|^wants$|^was$|^wasnt$|^way$|^we$|^wed$|^welcome$|^we'll$|^went$|^were$|^werent$|^we've$|^what$|^whatever$|^what'll$|^whats$|^when$|^whence$|^whenever$|^where$|^whereafter$|^whereas$|^whereby$|^wherein$|^wheres$|^whereupon$|^wherever$|^whether$|^which$|^while$|^whim$|^whither$|^who$|^whod$|^whoever$|^whole$|^who'll$|^whom$|^whomever$|^whos$|^whose$|^why$|^widely$|^willing$|^wish$|^with$|^within$|^without$|^wont$|^words$|^world$|^would$|^wouldnt$|^www$|^x$|^y$|^yes$|^yet$|^you$|^youd$|^you'll$|^your$|^youre$|^yours$|^yourself$|^yourselves$|^you've$|^z$|^zero$";
 
   var STOPWORDS_RE = new RegExp(
     [
       WEB_WORDS,
+      SIZE_WORDS,
       EMAIL_WORDS,
       OFFICE_WORDS,
       DUTCH_STOPWORDS,
@@ -33,7 +36,7 @@ window.ikkeCalendar = function () {
   );
 
   var WORDS_RE = new RegExp("[A-Za-z][A-Za-z][A-Za-z]+", "g");
-  var CAMELCASE_RE = new RegExp("[A-Z][a-z]+[A-Z]");
+  var CAMELCASE_RE = new RegExp("[A-Z][a-zA-Z]+");
 
   var userEmail = $("#xUserEmail").text();
   var currentEmail = userEmail;
@@ -41,6 +44,7 @@ window.ikkeCalendar = function () {
   var emailToNode = {};
   var interestingEmails = [];
   var firstNames = {};
+  var lastEventsLength = 0;
 
   var options = {
     WORD_COUNT: 5,
@@ -60,13 +64,19 @@ window.ikkeCalendar = function () {
     FORCE_CENTER_Y: 0.4,
     MINIMUM_COLLABORATOR_COUNT: 9,
     FAILED_EVENTS_TIMEOUT: 7000,
+    MINIMUM_MEETING_SIZE: 3,
+    MINIMUM_PROJECT_COUNT: 6,
   };
 
   function showMessage(msg) {
-    var x = $(window).width() * 2 / 5 - 4 * msg.length;
+    var x = $(window).width() / 2 - 4 * msg.length;
     $("#ikke-msg")
       .text(msg)
       .css("left", x + "px")
+  }
+
+  function debug() {
+    for (arg of arguments) console.log(arg);
   }
 
   function showGraph(email) {
@@ -123,7 +133,7 @@ window.ikkeCalendar = function () {
                 }),
               $("<button>")
                 .attr("id", "ikke-load-button")
-                .on("click", filterChanged)
+                .on("click", reload)
                 .text("Go"),
             ),
           $("<div>")
@@ -135,9 +145,17 @@ window.ikkeCalendar = function () {
             .on("click", closeGraph)
             .text("x"),
           $("<div>")
-            .attr("id", "ikke-files")
+            .addClass("ikke-sidebar")
             .css("height", $(window).height() - 240)
-            .addClass("ikke-files"),
+            .append(
+              $("<div>")
+                .addClass("ikke-projects")
+                .text("Main Projects, Teams, and Focus:"),
+              $("<div>")
+                .attr("id", "ikke-files")
+                .text("Important Files:")
+                .addClass("ikke-files"),
+            ),
           $("<div>")
             .addClass("ikke-zoom-buttons")
             .append(
@@ -160,6 +178,7 @@ window.ikkeCalendar = function () {
     );
     // addGraphOptions();
     showMessage("Loading");
+    $(".ikke-sidebar").css("visibility", "hidden");
     setTitle("", email);
     getCalendarEvents(email);
   }
@@ -248,10 +267,16 @@ window.ikkeCalendar = function () {
   }
 
   chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    console.log("Handle message", request.kind);
+    debug("Handle message " + request.kind);
     switch (request.kind) {
       case "calendar-events":
-        console.log("Handle", request.events.length, "events for", request.email, request);
+        if (request.events.length == lastEventsLength) {
+          lastEventsLength = 0;
+          reload();
+          break;
+        }
+        lastEventsLength = request.events.length;
+        debug("Handle " + lastEventsLength + " events for " + request.email, request);
         if (request.email === currentEmail) {
           convertToGraph(request.events, currentEmail);
         } else {
@@ -265,7 +290,12 @@ window.ikkeCalendar = function () {
   });
 
   function emailChanged() {
+    currentSearchTopic = ""
     showGraph($("#ikke-title-email").val());
+  }
+
+  function reload() {
+    filterChanged();
   }
 
   function filterChanged() {
@@ -320,16 +350,18 @@ window.ikkeCalendar = function () {
     }
 
     function isValuableMeeting(event) {
-      if (!event.attendees) return false; // just a meeting with me
-      event.attendees = event.attendees.filter(isAttendingPerson);
-      if (event.attachments) return true; // attachments are always interesting
-      if (event.attendeesOmitted) return false; // too many attendees
-      if (event.organizer && event.organizer.email && event.organizer.email.indexOf("@group.calendar.google.com") !== -1) return false; // invite from a group
-      if (event.attendees.length > 1) return true; // at least two people in this meeting
+      if (event.attendees) {
+        event.attendees = event.attendees.filter(isAttendingPerson);
+        if (!event.attendeesOmitted) {
+          if (event.attendees.length >= options.MINIMUM_MEETING_SIZE) return true; // avoid small meetingavoid small meetings
+          if (event.attachments) return true; // attachments are always interesting
+        }
+      }
       return false;
     }
 
     events = events.filter(isValuableMeeting);
+
     if (currentSearchTopic) {
       var regex = new RegExp(currentSearchTopic, "i");
       events = events.filter(event => {
@@ -356,6 +388,7 @@ window.ikkeCalendar = function () {
           var target = getUniqueAttendee(event.attendees[i]);
           if (!source.resource && !target.resource) {
             getUniqueLink(source, target).value += 1;
+            source.attachments = target.attachments = event.attachments;
           }
         }
       }
@@ -403,11 +436,11 @@ window.ikkeCalendar = function () {
         emailToNode[link.target.email].count += 1;
       });
       nodes = d3.values(emailToNode);
-      var people = nodes.filter(node => !node.isFile && !node.is && node.count > options.MINIMUM_COLLABORATOR_COUNT);
+      var people = nodes.filter(node => !node.isFile && !node.is && (node.count > options.MINIMUM_COLLABORATOR_COUNT || node.attachments));
       var minCount = people.length < 10 ? 0 : options.MINIMUM_COLLABORATOR_COUNT;
-      console.log("Found", people.length, "people. minCount:", minCount);
+      debug("Found " + people.length + " people. minCount: " + minCount, people);
       nodes = nodes.filter(node => {
-        const interesting = node.isFile || node.isTopic || node.count > minCount;
+        const interesting = node.isFile || node.isTopic || node.count > minCount || node.attachments;
         if (interesting) interestingEmails.push(node.email);
         return interesting;
       });
@@ -537,9 +570,24 @@ window.ikkeCalendar = function () {
       nodes = nodes.concat(d3.values(topicNodes));
     }
 
+    function addProjects() {
+      projects = nodes
+        .filter(node => node.isTopic && node.count >= options.MINIMUM_PROJECT_COUNT && node.name.match(/^[A-Z]/))
+        .sort((p1, p2) => p2.count - p1.count)
+        .slice(0, 10);
+      projects.map((project) => {
+        $(".ikke-projects")
+          .append($("<div>")
+            .addClass("ikke-project")
+            .text(project.email)
+          );
+      });
+    }
+
     convertLinksToNodes();
     addDetails();
     addTopics();
+    addProjects();
     addFiles();
     annotateNodes();
     colorSpecialNodes();
@@ -559,6 +607,8 @@ window.ikkeCalendar = function () {
 
 
     showMessage(nodes.length > 0 ? "" : "No meetings found that collaborators.");
+
+    $(".ikke-sidebar").css("visibility", "visible");
 
     var g = svg.append("g");
 
@@ -583,7 +633,7 @@ window.ikkeCalendar = function () {
       .attr("class", "link")
       .style("stroke-opacity", 0.1)
       .style("stroke-width", function(l) {
-        return Math.max(2, l.source.count * 1.5);
+        return Math.max(2, l.source.count * 2 *  Math.log(l.source.count));
       })
       .style("stroke", function(l) {
         return l.source.linkColor || "grey";
@@ -743,6 +793,7 @@ window.ikkeCalendar = function () {
         currentSearchTopic = d.name;
         showGraph($("#ikke-title-email").val());
       } else if (d.email) {
+        currentSearchTopic = ""
         showGraph(d.email);
       }
     }
@@ -852,16 +903,23 @@ window.ikkeCalendar = function () {
 
   function getWords(s) {
     var words = s.match(WORDS_RE) || [];
-    return words
-      .filter(function(word) {
+    var uniqueWords = {};
+    words = words
+      .filter(function (word) {
+        if (uniqueWords[word]) return false;
+        uniqueWords[word] = word;
         return !word.match(STOPWORDS_RE);
       })
-      .map(function(word) {
+      .map(function (word) {
         if (word.match(CAMELCASE_RE)) {
-          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+          return (word.charAt(0).toUpperCase() + word.slice(1)).trim();
         }
-        return word;
       });
+    if (words.length < 4) {
+      joined = words.join(" ").trim();
+      return joined.length ? [joined] : [];
+    }
+    return [];
   }
 
   if (!Array.prototype.last){
