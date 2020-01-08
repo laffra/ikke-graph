@@ -5,27 +5,21 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   lastTabId = tabId;
 });
 
-var UNSAFE_HEADERS = /(User-Agent)|(Referer)|(Accept-Encoding)|(Cookie)/;
+var UNSAFE_HEADERS = /(User-Agent)|(Referer)|(Accept-Encoding)/; // |(Cookie)/;
 
-var mailActionTokens = {};
 var eventsHeaders = [];
 var eventsUrl = "";
+var photoUrlCache = {};
 var lastTabId = 0;
 var eventsLoaded = false;
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   console.log("handle message", request.kind, sender, sender.tab.id);
   switch (request.kind) {
-    case "mail-action-token":
-      mailActionTokens[request.email] = request.token;
-      break;
-    case "get-mail-action-token":
-      sendResponse({ token: mailActionTokens[request.email] });
-      break;
     case "get-calendar-events":
       lastTabId = sender.tab.id;
       eventsLoaded = false;
-      getCalendarEvents(request.email);
+      getCalendarEvents(request.email, request.days);
       break;
   }
 });
@@ -43,6 +37,17 @@ function safeHeaders(unsafeHeaders) {
 chrome.webRequest.onBeforeSendHeaders.addListener(
   function (details) {
     eventsHeaders = safeHeaders(details.requestHeaders);
+    var url = new URL(details.url);
+    for (const [k, v] of url.searchParams) {
+      if (k === "key") {
+        console.log("Send headers and key", v, eventsHeaders);
+        chrome.tabs.sendMessage(lastTabId, {
+          kind: "people-key",
+          eventsHeaders: eventsHeaders,
+          contactsKey: v,
+        });
+      }
+    }
     eventsUrl = details.url;
     if (details.tabId > 0) {
       lastTabId = details.tabId;
@@ -66,26 +71,33 @@ function retrySendCalendarEvents(message, email) {
   setTimeout(function () { getCalendarEvents(email); }, 1000);
 }
 
-function getCalendarEvents(email) {
+function getIsoDate(days) {
+  var date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString();
+}
+
+function getUpdatedUrl(email, daysBack, urlString) {
+  var url = new URL(urlString);
+  var params = url.searchParams;
+  params.set('maxResults', 1000);
+  params.set('maxAttendees', 12);
+  params.delete('pageToken');
+  params.set('timeMax', getIsoDate(30));
+  params.set('timeMin', getIsoDate(-daysBack));
+  var path = url.pathname.replace(/calendars\/.*\/events/, "calendars/" + email + "/events");
+  var paramsString = Array.from(params.entries()).map(kv => encodeURIComponent(kv[0]) + "=" + encodeURIComponent(kv[1])).join("&");
+  return url.protocol + "/" + url.hostname + path + "?" + paramsString;
+}
+
+function getCalendarEvents(email, daysBack) {
   console.log("getCalendarEvents", email, eventsLoaded);
   if (eventsLoaded) return;
   if (!eventsUrl) {
     retrySendCalendarEvents("No events URL, retrying in 1s", email);
     return;
   }
-  var now = new Date();
-  now.setDate(now.getDate() + 30);
-  var max = now.toISOString();
-  now.setDate(now.getDate() - 60);
-  var min = now.toISOString();
-  var url = eventsUrl
-    .replace(/calendars\/.*\/events/, "calendars/" + email + "/events")
-    .replace('maxResults=250&', 'maxResults=1000&')
-    .replace('maxAttendees=1&', 'maxAttendees=12&')
-    .replace(/pageToken=.*/, '')
-    .replace(/timeMax=[^&]*&/, 'timeMax=' + max + '&');
-  console.log("Get calendar events for", email);
-  url.split("&").map(s => console.log("   " + s));
+  var url = getUpdatedUrl(email, daysBack, eventsUrl);
   $.ajax({
     url: url,
     headers: eventsHeaders,
@@ -123,5 +135,4 @@ function reloadTab(domain) {
     });
   });
 }
-reloadTab("mail.google.com");
 reloadTab("calendar.google.com");

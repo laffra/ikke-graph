@@ -2,7 +2,7 @@
   "name": "Ikke Work Graph",
   "short_name": "Ikke Work Graph",
   "description": "Ikke  Work Graph - See Who You Work With",
-  "version": "1.18",
+  "version": "1.20",
   "permissions": [
     "tabs",
     "activeTab",
@@ -10,7 +10,6 @@
     "webRequest",
     "webRequestBlocking",
     "unlimitedStorage",
-    "*://mail.google.com/",
     "*://clients1.google.com/",
     "*://clients2.google.com/",
     "*://clients3.google.com/",
@@ -26,7 +25,7 @@
     {
       "matches" : [
         "https://calendar.google.com/*",
-        "https://mail.google.com/*"
+        "https://contacts.google.com/*"
       ],
       "css" : [
         "jquery/jquery-ui.min.css",
@@ -38,8 +37,6 @@
         "jquery/jquery.min.js",
         "jquery/jquery-ui.min.js",
         "d3/d3.v4.min.js",
-        "mail.js",
-        "calendar.js",
         "contentscript.js"
       ],
       "all_frames" : true
